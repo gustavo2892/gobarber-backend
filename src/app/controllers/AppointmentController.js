@@ -8,7 +8,8 @@ import File from '../models/File';
 
 import Notification from '../schemas/Notification';
 
-import Mail from '../../lib/mail';
+import CancellationMail from '../jobs/CancellationMail';
+import Queue from '../../lib/queue';
 
 class AppointmentController {
   async index(req, res) {
@@ -164,6 +165,7 @@ class AppointmentController {
 
     await appointment.save();
 
+    /** Moved to CancellationMail in jobs
     await Mail.sendMail({
       to: `${appointment.provider.name} <${appointment.provider.email}>`,
       subject: 'Agendamento cancelado',
@@ -175,6 +177,11 @@ class AppointmentController {
           locale: pt,
         }),
       },
+    });
+    */
+
+    await Queue.add(CancellationMail.key, {
+      appointment,
     });
 
     return res.json(appointment);
